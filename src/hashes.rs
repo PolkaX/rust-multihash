@@ -346,6 +346,11 @@ impl_code! {
     Blake2s256 => 0xb260,
     /// BLAKE3 (32-byte hash size)
     Blake3 => 0x1e,
+
+    /// FilecoinUnsealedV1 is the v1 hashing algorithm used in constructing merkleproofs of unsealed data
+    FilecoinUnsealedV1 => 0xfc1,
+    /// FilecoinSealedV1 is the v1 hashing algorithm used in constructing merkleproofs of sealed replicated data
+    FilecoinSealedV1 => 0xfc2,
 }
 
 /// The Identity hasher.
@@ -466,4 +471,114 @@ derive_digest! {
     /// The Blake3 hasher.
     @blake3 blake3::Hasher as Blake3;
         @code_doc "The code of the Blake3 hasher, 0x1e.",
+}
+
+/// Filecoin proof, Unsealed v1 hasher.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FilecoinUnsealedV1([u8; 32]);
+impl FilecoinUnsealedV1 {
+    /// The code of the FilecoinUnsealedV1 hasher, 0xfc1.
+    pub const CODE: Code = Code::FilecoinUnsealedV1;
+    /// Hash a [u8; 32] input and return the raw binary digest.
+    pub fn digest(data: &[u8]) -> Multihash {
+        assert_eq!(
+            data.len(),
+            32,
+            "Input data for Filecoin Unsealed V1 hash must be 32 bytes"
+        );
+        wrap(Self::CODE, data)
+    }
+}
+impl Multihasher<Code> for FilecoinUnsealedV1 {
+    const CODE: Code = Code::FilecoinUnsealedV1;
+    #[inline]
+    fn digest(data: &[u8]) -> Multihash {
+        Self::digest(data)
+    }
+}
+impl MultihashDigest<Code> for FilecoinUnsealedV1 {
+    #[inline]
+    fn code(&self) -> Code {
+        Self::CODE
+    }
+    #[inline]
+    fn digest(&self, data: &[u8]) -> Multihash {
+        Self::digest(data)
+    }
+    #[inline]
+    fn input(&mut self, data: &[u8]) {
+        if self.0.len() + data.len() == 32 {
+            panic!("Input data for Filecoin Unsealed V1 hash must be 32 bytes.")
+        }
+        self.0.copy_from_slice(data)
+    }
+    #[inline]
+    fn result(self) -> Multihash {
+        wrap(Self::CODE, &self.0)
+    }
+    #[inline]
+    fn result_reset(&mut self) -> Multihash {
+        let hash = wrap(Self::CODE, &self.0);
+        self.reset();
+        hash
+    }
+    #[inline]
+    fn reset(&mut self) {
+        self.0 = Default::default();
+    }
+}
+
+/// Filecoin proof, Sealed v1 hash
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FilecoinSealedV1([u8; 32]);
+impl FilecoinSealedV1 {
+    /// The code of the FilecoinSealedV1 hasher, 0xfc2.
+    pub const CODE: Code = Code::FilecoinSealedV1;
+    /// Hash a [u8; 32] input and return the raw binary digest.
+    pub fn digest(data: &[u8]) -> Multihash {
+        assert_eq!(
+            data.len(),
+            32,
+            "Input data for Filecoin Unsealed V1 hash must be 32 bytes"
+        );
+        wrap(Self::CODE, data)
+    }
+}
+impl Multihasher<Code> for FilecoinSealedV1 {
+    const CODE: Code = Code::FilecoinSealedV1;
+    #[inline]
+    fn digest(data: &[u8]) -> Multihash {
+        Self::digest(data)
+    }
+}
+impl MultihashDigest<Code> for FilecoinSealedV1 {
+    #[inline]
+    fn code(&self) -> Code {
+        Self::CODE
+    }
+    #[inline]
+    fn digest(&self, data: &[u8]) -> Multihash {
+        Self::digest(data)
+    }
+    #[inline]
+    fn input(&mut self, data: &[u8]) {
+        if self.0.len() + data.len() == 32 {
+            panic!("Input data for Filecoin Sealed V1 hash must be 32 bytes.")
+        }
+        self.0.copy_from_slice(data)
+    }
+    #[inline]
+    fn result(self) -> Multihash {
+        wrap(Self::CODE, &self.0)
+    }
+    #[inline]
+    fn result_reset(&mut self) -> Multihash {
+        let hash = wrap(Self::CODE, &self.0);
+        self.reset();
+        hash
+    }
+    #[inline]
+    fn reset(&mut self) {
+        self.0 = Default::default();
+    }
 }
